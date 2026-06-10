@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Test Frontend</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      gap: 24px;
+    }
+    h1 { font-size: 2rem; color: #38bdf8; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 12px;
+      padding: 24px 32px;
+      min-width: 360px;
+      text-align: center;
+    }
+    .label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
+    .value { font-size: 1.1rem; color: #f1f5f9; font-weight: 500; }
+    .status-ok  { color: #4ade80; }
+    .status-err { color: #f87171; }
+    button {
+      background: #0ea5e9;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #38bdf8; }
+    .badge {
+      display: inline-block;
+      background: #334155;
+      border-radius: 999px;
+      padding: 4px 14px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <h1>🚀 Test Frontend</h1>
+  <span class="badge" id="version-badge">version: loading…</span>
+
+  <div class="card">
+    <div class="label">Backend Response</div>
+    <div class="value" id="backend-msg">Fetching…</div>
+  </div>
+
+  <div class="card">
+    <div class="label">Backend Status</div>
+    <div class="value" id="backend-status">—</div>
+  </div>
+
+  <button onclick="fetchBackend()">↻ Refresh</button>
+
+  <script>
+    const BACKEND = '/api';   // proxied by nginx to test-backend-svc:8080
+
+    async function fetchBackend() {
+      document.getElementById('backend-msg').textContent = 'Fetching…';
+      document.getElementById('backend-status').textContent = '—';
+      try {
+        const res  = await fetch(`${BACKEND}/message`);
+        const data = await res.json();
+        document.getElementById('backend-msg').textContent    = data.message   || JSON.stringify(data);
+        document.getElementById('backend-status').textContent = data.status    || 'unknown';
+        document.getElementById('backend-status').className   = 'value ' + (data.status === 'ok' ? 'status-ok' : 'status-err');
+      } catch (e) {
+        document.getElementById('backend-msg').textContent    = 'Could not reach backend';
+        document.getElementById('backend-status').textContent = 'error';
+        document.getElementById('backend-status').className   = 'value status-err';
+      }
+    }
+
+    async function fetchVersion() {
+      try {
+        const res  = await fetch('/health');
+        const data = await res.json();
+        document.getElementById('version-badge').textContent = `version: ${data.version || 'unknown'}`;
+      } catch { /* ignore */ }
+    }
+
+    fetchVersion();
+    fetchBackend();
+  </script>
+</body>
+</html>
